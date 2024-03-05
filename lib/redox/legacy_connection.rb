@@ -1,5 +1,5 @@
 module Redox
-  class Connection
+  class LegacyConnection
     DEFAULT_ENDPOINT = '/endpoint'.freeze
 
     include HTTParty
@@ -12,19 +12,15 @@ module Redox
 
     def request(endpoint: DEFAULT_ENDPOINT, body: nil, headers: {}, auth: true)
       body    = body.to_json if body.is_a?(Hash)
-      headers = auth_header(auth_class(endpoint)).merge(headers) if auth
+      headers = auth_header.merge(headers) if auth
 
       self.class.post(endpoint, body: body, headers: headers)
     end
 
     private
 
-    def auth_class(endpoint)
-      endpoint.start_with?('/platform') ? PlatformAuthentication : FHIRAuthentication
-    end
-
-    def auth_header(klass)
-      @auth ||= klass.new
+    def auth_header
+      @auth ||= LegacyAuthentication.new
 
       @auth.authenticate.access_header
     end
